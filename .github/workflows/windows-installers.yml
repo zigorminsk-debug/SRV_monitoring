@@ -57,37 +57,61 @@ jobs:
       - name: Build self-contained server executable
         shell: pwsh
         run: |
-          pyinstaller --noconfirm --clean --onedir --noconsole `
-            --name SRVMonitoringServer `
-            --distpath build\server `
-            --workpath build\pyinstaller-server `
-            --specpath build `
-            --add-data "static;static" `
-            --collect-all fastapi `
-            --collect-all starlette `
-            --collect-all uvicorn `
-            --collect-all pydantic `
-            --collect-all pydantic_core `
-            --collect-all cryptography `
-            --collect-all dotenv `
-            --collect-all pyVmomi `
-            --collect-all pyVim `
-            --hidden-import pyVim.connect `
-            server_entry.py
+          New-Item -ItemType Directory -Force build | Out-Null
+          $buildLog = Join-Path $env:GITHUB_WORKSPACE "build\\server-pyinstaller.log"
+          $pyinstallerArgs = @(
+            "--noconfirm", "--clean", "--onedir", "--noconsole",
+            "--name", "SRVMonitoringServer",
+            "--distpath", "build\\server",
+            "--workpath", "build\\pyinstaller-server",
+            "--specpath", "build",
+            "--add-data", "static;static",
+            "--collect-all", "fastapi",
+            "--collect-all", "starlette",
+            "--collect-all", "uvicorn",
+            "--collect-all", "pydantic",
+            "--collect-all", "pydantic_core",
+            "--collect-all", "cryptography",
+            "--collect-all", "dotenv",
+            "--collect-all", "pyVmomi",
+            "--collect-all", "pyVim",
+            "--hidden-import", "pyVim.connect",
+            "server_entry.py"
+          )
+          & pyinstaller @pyinstallerArgs 2>&1 | Tee-Object -FilePath $buildLog
+          $buildExitCode = $LASTEXITCODE
+          if ($buildExitCode -ne 0) {
+            $details = (Get-Content $buildLog -Tail 40) -join "`n"
+            $details = $details.Replace("%", "%25").Replace("`r", "%0D").Replace("`n", "%0A")
+            Write-Output "::error title=Server PyInstaller diagnostics::$details"
+            throw "Server PyInstaller failed: $buildExitCode"
+          }
 
       - name: Build self-contained agent executable
         shell: pwsh
         run: |
-          pyinstaller --noconfirm --clean --onedir --noconsole `
-            --name SRVMonitoringAgent `
-            --distpath build\agent `
-            --workpath build\pyinstaller-agent `
-            --specpath build `
-            --collect-all psutil `
-            --collect-all httpx `
-            --collect-all certifi `
-            --hidden-import agent.monitor_agent `
-            agent_entry.py
+          New-Item -ItemType Directory -Force build | Out-Null
+          $buildLog = Join-Path $env:GITHUB_WORKSPACE "build\\agent-pyinstaller.log"
+          $pyinstallerArgs = @(
+            "--noconfirm", "--clean", "--onedir", "--noconsole",
+            "--name", "SRVMonitoringAgent",
+            "--distpath", "build\\agent",
+            "--workpath", "build\\pyinstaller-agent",
+            "--specpath", "build",
+            "--collect-all", "psutil",
+            "--collect-all", "httpx",
+            "--collect-all", "certifi",
+            "--hidden-import", "agent.monitor_agent",
+            "agent_entry.py"
+          )
+          & pyinstaller @pyinstallerArgs 2>&1 | Tee-Object -FilePath $buildLog
+          $buildExitCode = $LASTEXITCODE
+          if ($buildExitCode -ne 0) {
+            $details = (Get-Content $buildLog -Tail 40) -join "`n"
+            $details = $details.Replace("%", "%25").Replace("`r", "%0D").Replace("`n", "%0A")
+            Write-Output "::error title=Agent PyInstaller diagnostics::$details"
+            throw "Agent PyInstaller failed: $buildExitCode"
+          }
 
       - name: Compile installers
         shell: pwsh
