@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101b2a">
+  <title>SRV Monitoring — контроль инфраструктуры</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <div id="loginView" class="login-view hidden">
+    <div class="login-art">
+      <div class="brand-lockup brand-lockup-large">
+        <span class="brand-mark"><i></i><i></i><i></i></span>
+        <span><b>SRV</b><small>MONITORING</small></span>
+      </div>
+      <div class="login-copy">
+        <div class="eyebrow"><span class="pulse-dot"></span> ЦЕНТР НАБЛЮДЕНИЯ</div>
+        <h1>Вся инфраструктура.<br><em>Под контролем.</em></h1>
+        <p>Состояние серверов, хранилищ, резервного копирования и удалённых узлов — в одном окне.</p>
+      </div>
+      <div class="login-foot"><span>SRV MONITORING · SELF-HOSTED</span><span>●&nbsp; ЗАЩИЩЁННЫЙ ДОСТУП</span></div>
+    </div>
+    <div class="login-panel">
+      <form id="loginForm" class="login-card">
+        <div class="mobile-brand brand-lockup">
+          <span class="brand-mark"><i></i><i></i><i></i></span>
+          <span><b>SRV</b><small>MONITORING</small></span>
+        </div>
+        <div class="eyebrow muted">ПАНЕЛЬ АДМИНИСТРАТОРА</div>
+        <h2>С возвращением</h2>
+        <p class="muted intro">Введите учётные данные для продолжения.</p>
+        <label class="field-label" for="loginUsername">Логин</label>
+        <div class="input-wrap"><span class="field-icon">⌁</span><input id="loginUsername" name="username" autocomplete="username" value="admin" required></div>
+        <label class="field-label" for="loginPassword">Пароль</label>
+        <div class="input-wrap"><span class="field-icon">◈</span><input id="loginPassword" name="password" type="password" autocomplete="current-password" required></div>
+        <div id="loginError" class="form-error hidden"></div>
+        <button class="btn btn-primary btn-wide" type="submit">Войти в систему <span>→</span></button>
+        <div class="login-note"><span class="lock-icon">▣</span> Доступ только для авторизованных пользователей</div>
+      </form>
+      <div class="login-copyright">SRV Monitoring <span>·</span> локальная система мониторинга</div>
+    </div>
+  </div>
+
+  <div id="appView" class="app-shell hidden">
+    <aside class="sidebar">
+      <a class="brand-lockup" href="#dashboard" aria-label="На главную">
+        <span class="brand-mark"><i></i><i></i><i></i></span>
+        <span><b>SRV</b><small>MONITORING</small></span>
+      </a>
+      <div class="workspace-label">РАБОЧЕЕ ПРОСТРАНСТВО</div>
+      <nav class="side-nav" aria-label="Основная навигация">
+        <button class="nav-link active" data-view="dashboard"><span class="nav-icon icon-grid">▦</span><span>Обзор</span><span class="nav-active-bar"></span></button>
+        <button class="nav-link" data-view="alerts"><span class="nav-icon">◉</span><span>События</span><span id="navAlertCount" class="nav-count hidden">0</span></button>
+        <button class="nav-link" data-view="assets"><span class="nav-icon">⌘</span><span>Устройства</span><span id="navDeviceCount" class="nav-count">0</span></button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="sidebar-system-card">
+          <div class="sys-card-head"><span class="pulse-dot"></span><span>Сбор данных</span><b id="sidebarPollInterval">—</b></div>
+          <div class="sys-card-bar"><span></span></div>
+          <small>Последняя синхронизация</small>
+          <strong id="sidebarLastSync">Ожидание данных</strong>
+        </div>
+        <button class="nav-link" data-view="settings"><span class="nav-icon">⚙</span><span>Настройки</span></button>
+        <div class="sidebar-footer"><span>SRV MONITORING</span><span id="appVersion">v0.1.0</span></div>
+      </div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <div class="breadcrumbs"><span>Мониторинг</span><b>/</b><strong id="pageTitle">Обзор</strong></div>
+        <div class="topbar-actions">
+          <div class="last-update"><span class="pulse-dot small"></span><span id="topLastSync">Обновление…</span></div>
+          <button id="refreshButton" class="icon-button" title="Обновить данные" aria-label="Обновить данные"><span class="refresh-glyph">↻</span></button>
+          <div class="profile-wrap">
+            <button id="profileButton" class="profile-button" aria-label="Профиль"><span class="avatar">A</span><span class="profile-text"><b id="profileName">admin</b><small>Администратор</small></span><span class="chevron">⌄</span></button>
+            <div id="profileMenu" class="profile-menu hidden"><button id="logoutButton">Выйти из системы <span>↗</span></button></div>
+          </div>
+        </div>
+      </header>
+
+      <div class="content-wrap">
+        <section id="view-dashboard" class="page-view active-view">
+          <div class="page-heading">
+            <div><div class="eyebrow muted">ЦЕНТР НАБЛЮДЕНИЯ <span class="heading-dot">/</span> <span id="todayLabel"></span></div><h1>Обзор инфраструктуры</h1><p>Ключевые показатели и состояние ваших систем в реальном времени.</p></div>
+            <div class="heading-actions"><button id="customizeButton" class="btn btn-secondary"><span class="button-symbol">☷</span> Настроить вид</button><button id="addSourceButton" class="btn btn-primary"><span class="plus">＋</span> Добавить источник</button></div>
+          </div>
+          <div id="customizePanel" class="customize-panel hidden">
+            <div><b>Вид дашборда</b><span>Показывать только нужные блоки. Настройки сохраняются в этом браузере.</span></div>
+            <div class="widget-toggles">
+              <label><input type="checkbox" data-widget-toggle="metrics" checked> Показатели</label>
+              <label><input type="checkbox" data-widget-toggle="trend" checked> Тренд</label>
+              <label><input type="checkbox" data-widget-toggle="alerts" checked> События</label>
+              <label><input type="checkbox" data-widget-toggle="devices" checked> Устройства</label>
+            </div>
+          </div>
+          <div class="hero-status" data-widget="metrics">
+            <div class="hero-orbit orbit-one"></div><div class="hero-orbit orbit-two"></div>
+            <div class="hero-copy"><div class="hero-kicker"><span class="live-indicator"></span> ОБЩЕЕ СОСТОЯНИЕ</div><h2 id="heroTitle">Подключаемся к инфраструктуре</h2><p id="heroSubtitle">Собираем первые данные от источников мониторинга.</p><div class="hero-meta"><span class="hero-meta-icon">◷</span> Интервал опроса <b id="heroInterval">—</b><span class="meta-divider"></span><span class="hero-meta-icon">⌁</span> Устройств <b id="heroDeviceTotal">0</b></div></div>
+            <div class="hero-visual"><div class="health-ring" id="healthRing"><div class="ring-inner"><span id="healthPercent">—</span><small>ЗДОРОВЫ</small></div></div><div class="hero-visual-label"><span class="ring-legend-dot"></span> Все системы под наблюдением</div></div>
+            <div class="hero-corner">SYSTEM<br>HEALTH</div>
+          </div>
+
+          <div class="kpi-grid" data-widget="metrics">
+            <article class="kpi-card"><div class="kpi-top"><span class="kpi-label">УСТРОЙСТВА</span><span class="kpi-icon kpi-blue">⌘</span></div><div class="kpi-value-row"><strong id="kpiDevices">0</strong><span id="kpiDevicesSub">в мониторинге</span></div><div class="kpi-bottom"><span class="kpi-dot blue"></span><span id="kpiDevicesFoot">ESXi, BMC и удалённые узлы</span></div></article>
+            <article class="kpi-card"><div class="kpi-top"><span class="kpi-label">КРИТИЧЕСКИЕ</span><span class="kpi-icon kpi-red">!</span></div><div class="kpi-value-row"><strong id="kpiCritical">0</strong><span>требуют внимания</span></div><div class="kpi-bottom"><span class="kpi-dot red"></span><span>Активные критические события</span></div></article>
+            <article class="kpi-card"><div class="kpi-top"><span class="kpi-label">ПРЕДУПРЕЖДЕНИЯ</span><span class="kpi-icon kpi-amber">⌁</span></div><div class="kpi-value-row"><strong id="kpiWarning">0</strong><span>на контроле</span></div><div class="kpi-bottom"><span class="kpi-dot amber"></span><span>Пороговые значения и связь</span></div></article>
+            <article class="kpi-card backup-kpi"><div class="kpi-top"><span class="kpi-label">РЕЗЕРВНОЕ КОПИРОВАНИЕ</span><span class="kpi-icon kpi-green">↗</span></div><div class="kpi-value-row"><strong id="kpiBackup">—</strong><span id="kpiBackupTime">нет данных</span></div><div class="kpi-bottom"><span class="kpi-dot green"></span><span id="kpiBackupFoot">Vinchin / Backup API</span></div></article>
+          </div>
+
+          <div class="dashboard-grid upper-grid">
+            <section class="panel trend-panel" data-widget="trend">
+              <div class="panel-heading"><div><div class="eyebrow muted">ПОСЛЕДНИЕ ИЗМЕРЕНИЯ</div><h3>Нагрузка инфраструктуры</h3></div><div class="trend-controls"><span class="trend-legend"><i class="legend-cpu"></i> CPU</span><span class="trend-legend"><i class="legend-memory"></i> RAM</span><select id="trendRange" aria-label="Диапазон графика"><option value="24">24 часа</option><option value="72">3 дня</option><option value="168">7 дней</option></select></div></div>
+              <div class="chart-wrap"><div class="chart-y-labels"><span>100%</span><span>75%</span><span>50%</span><span>25%</span><span>0%</span></div><div class="chart-stage"><div class="chart-grid-lines"><i></i><i></i><i></i><i></i><i></i></div><svg id="trendChart" viewBox="0 0 720 196" preserveAspectRatio="none" role="img" aria-label="График использования CPU и памяти"><path class="chart-fill cpu-fill" d=""></path><path class="chart-line cpu-line" d=""></path><path class="chart-fill memory-fill" d=""></path><path class="chart-line memory-line" d=""></path><g id="chartPoints"></g></svg><div id="chartEmpty" class="chart-empty">Для построения тренда добавьте источник и дождитесь первого опроса.</div><div class="chart-x-labels"><span>−24ч</span><span>−18ч</span><span>−12ч</span><span>−6ч</span><span>Сейчас</span></div></div></div>
+              <div class="chart-foot"><span><i class="legend-cpu"></i> Средняя загрузка CPU</span><b id="chartCpuAverage">—</b><span><i class="legend-memory"></i> Средняя загрузка памяти</span><b id="chartMemoryAverage">—</b></div>
+            </section>
+            <section class="panel alerts-panel" data-widget="alerts">
+              <div class="panel-heading"><div><div class="eyebrow muted">ТРЕБУЮТ ВНИМАНИЯ</div><h3>Последние события</h3></div><button class="text-button" data-view-link="alerts">Все события <span>→</span></button></div>
+              <div id="recentAlerts" class="recent-alerts"><div class="empty-state compact"><span class="empty-icon">✓</span><b>Событий пока нет</b><small>Новые тревоги появятся здесь автоматически.</small></div></div>
+              <div class="alerts-footer"><span id="activeAlertsText">Нет активных событий</span><span class="alert-footer-icon">↗</span></div>
+            </section>
+          </div>
+
+          <section class="panel devices-panel" data-widget="devices">
+            <div class="panel-heading devices-heading"><div><div class="eyebrow muted">КОНТРОЛЬНЫЙ СПИСОК</div><h3>Устройства под наблюдением</h3></div><div class="device-heading-actions"><div class="table-search"><span>⌕</span><input id="deviceSearch" placeholder="Поиск устройства…" aria-label="Поиск устройства"></div><button class="text-button" data-view-link="assets">Все устройства <span>→</span></button></div></div>
+            <div class="table-scroll"><table class="device-table"><thead><tr><th>УСТРОЙСТВО</th><th>ТИП</th><th>СОСТОЯНИЕ</th><th>ПОСЛЕДНИЙ ОПРОС</th><th>КЛЮЧЕВЫЕ ПОКАЗАТЕЛИ</th><th></th></tr></thead><tbody id="deviceTableBody"><tr><td colspan="6"><div class="empty-state table-empty"><span class="empty-icon">⌁</span><b>Источники мониторинга не добавлены</b><small>Добавьте ESXi, Redfish/IPMI, Backup API или подключите удалённый агент.</small></div></td></tr></tbody></table></div>
+            <div class="table-footer"><span id="deviceTableCount">0 устройств</span><button id="addAgentButton" class="text-button">Подключить удалённый агент <span>＋</span></button></div>
+          </section>
+          <div class="page-footer"><span>SRV MONITORING <span class="footer-separator">/</span> инфраструктура под контролем</span><span><i class="pulse-dot small"></i> Сбор данных активен</span></div>
+        </section>
+
+        <section id="view-alerts" class="page-view">
+          <div class="page-heading"><div><div class="eyebrow muted">ЖУРНАЛ СОБЫТИЙ <span class="heading-dot">/</span> МОНИТОРИНГ</div><h1>События и тревоги</h1><p>Изменения статуса, критические ошибки и предупреждения по всей инфраструктуре.</p></div><div class="heading-actions"><select id="alertFilter" class="select-control"><option value="active">Только активные</option><option value="all">Все события</option><option value="critical">Критические</option><option value="warning">Предупреждения</option></select></div></div>
+          <div class="alert-summary-grid"><div class="mini-stat"><span class="mini-stat-icon red">!</span><div><b id="alertCriticalCount">0</b><small>Критических</small></div></div><div class="mini-stat"><span class="mini-stat-icon amber">⌁</span><div><b id="alertWarningCount">0</b><small>Предупреждений</small></div></div><div class="mini-stat"><span class="mini-stat-icon green">✓</span><div><b id="alertResolvedCount">0</b><small>Разрешено</small></div></div></div>
+          <section class="panel full-alerts-panel"><div class="panel-heading"><div><div class="eyebrow muted">ОПЕРАТИВНЫЙ ЖУРНАЛ</div><h3>Все события</h3></div><span id="alertFeedCount" class="small-counter">0 записей</span></div><div id="fullAlerts" class="full-alert-list"><div class="empty-state"><span class="empty-icon">✓</span><b>Все системы работают штатно</b><small>Когда мониторинг обнаружит проблему, она появится в этом журнале.</small></div></div></section>
+        </section>
+
+        <section id="view-assets" class="page-view">
+          <div class="page-heading"><div><div class="eyebrow muted">УПРАВЛЕНИЕ ИНФРАСТРУКТУРОЙ <span class="heading-dot">/</span> РЕЕСТР</div><h1>Устройства</h1><p>Источники мониторинга, удалённые агенты и подробности последних измерений.</p></div><div class="heading-actions"><button id="assetsAddSource" class="btn btn-primary"><span class="plus">＋</span> Добавить источник</button><button id="assetsAddAgent" class="btn btn-secondary">Подключить агент <span>→</span></button></div></div>
+          <div class="asset-filters"><div class="asset-tabs"><button class="asset-tab active" data-asset-filter="all">Все <span id="assetAllCount">0</span></button><button class="asset-tab" data-asset-filter="source">Источники <span id="assetSourceCount">0</span></button><button class="asset-tab" data-asset-filter="agent">Удалённые агенты <span id="assetAgentCount">0</span></button></div><div class="table-search asset-search"><span>⌕</span><input id="assetSearch" placeholder="Название или адрес…" aria-label="Поиск устройств"></div></div>
+          <div id="assetCards" class="asset-grid"><div class="empty-state"><span class="empty-icon">⌘</span><b>Добавьте первое устройство</b><small>Создайте источник ESXi, аппаратного BMC или системы резервного копирования.</small></div></div>
+        </section>
+
+        <section id="view-settings" class="page-view">
+          <div class="page-heading"><div><div class="eyebrow muted">ПАРАМЕТРЫ СИСТЕМЫ <span class="heading-dot">/</span> КОНФИГУРАЦИЯ</div><h1>Настройки мониторинга</h1><p>Управляйте частотой опроса, источниками, агентами и безопасностью подключения.</p></div></div>
+          <div class="settings-grid">
+            <section class="panel settings-card"><div class="settings-card-icon blue">◷</div><div class="eyebrow muted">СБОР ДАННЫХ</div><h3>Интервал опроса</h3><p>Как часто сервер будет проверять ESXi, BMC и API резервного копирования.</p><form id="pollSettingsForm" class="poll-form"><label for="pollInterval">Интервал, секунд</label><div class="poll-input-row"><input id="pollInterval" type="number" min="15" max="86400" step="5" value="60"><button class="btn btn-primary" type="submit">Сохранить</button></div><small>Допустимый диапазон: 15 секунд — 24 часа. Удалённые агенты отправляют данные по собственному интервалу.</small><div id="settingsSaved" class="inline-success hidden">✓ Настройки сохранены</div></form></section>
+            <section class="panel settings-card"><div class="settings-card-icon green">⌘</div><div class="eyebrow muted">ИСТОЧНИКИ</div><h3>Подключения</h3><p>Добавьте vCenter/ESXi, Redfish, IPMI или JSON API системы резервного копирования.</p><div class="setting-facts"><div><b id="settingsSourceCount">0</b><span>источников</span></div><div><b id="settingsAgentCount">0</b><span>агентов</span></div></div><button id="settingsAddSource" class="btn btn-secondary">Управлять источниками <span>→</span></button></section>
+            <section class="panel settings-card security-card"><div class="settings-card-icon amber">◈</div><div class="eyebrow muted">БЕЗОПАСНОСТЬ</div><h3>Доступ и транспорт</h3><p>Учётные данные источников хранятся в зашифрованном виде. Токены удалённых агентов показываются один раз.</p><div class="security-note"><span>!</span><div><b>Перед публикацией в интернете</b><small>Включите HTTPS, ограничьте входящий доступ межсетевым экраном и используйте длинный пароль администратора.</small></div></div><div class="security-status"><span class="security-dot"></span><span>Панель защищена сессионной авторизацией</span></div></section>
+            <section class="panel settings-card integration-card"><div class="settings-card-icon purple">↗</div><div class="eyebrow muted">ИНТЕГРАЦИЯ VINCHIN</div><h3>Контроль резервных копий</h3><p>Подключите доступный в вашей версии API как JSON источник или передавайте результат локальной проверки через агент.</p><div class="integration-flow"><span>Vinchin / скрипт</span><i>→</i><span>JSON статус</span><i>→</i><span>тревога</span></div><button id="settingsAddBackup" class="text-button">Добавить Backup API <span>→</span></button></section>
+          </div>
+          <section class="panel source-management"><div class="panel-heading"><div><div class="eyebrow muted">КОНФИГУРАЦИЯ</div><h3>Подключённые источники</h3></div><button id="settingsAddSourceTop" class="text-button">＋ Добавить источник</button></div><div id="sourceManagementList" class="source-management-list"><div class="empty-state compact"><b>Источников пока нет</b><small>Добавьте устройства, которые требуется контролировать.</small></div></div></section>
+          <section class="panel source-management agent-management"><div class="panel-heading"><div><div class="eyebrow muted">ВЫХОДЯЩЕЕ ПОДКЛЮЧЕНИЕ</div><h3>Удалённые агенты</h3></div><button id="settingsAddAgent" class="text-button">＋ Создать токен агента</button></div><div id="agentManagementList" class="source-management-list"><div class="empty-state compact"><b>Агенты ещё не подключены</b><small>Создайте токен и установите агент на удалённый Windows-сервер.</small></div></div></section>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div id="sourceModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="sourceModalTitle"><div class="modal source-modal"><div class="modal-head"><div><div class="eyebrow muted">НАСТРОЙКА ПОДКЛЮЧЕНИЯ</div><h2 id="sourceModalTitle">Добавить источник</h2></div><button class="modal-close" data-close-modal aria-label="Закрыть">×</button></div><div id="sourceFormError" class="form-error hidden"></div><form id="sourceForm"><input id="sourceId" type="hidden"><label class="field-label" for="sourceName">Название источника</label><input id="sourceName" class="form-input" placeholder="Например, vCenter основной площадки" maxlength="100" required><label class="field-label" for="sourceType">Тип подключения</label><select id="sourceType" class="form-input"><option value="vmware">VMware ESXi / vCenter API</option><option value="redfish">Аппаратное состояние · Redfish</option><option value="ipmi">Аппаратное состояние · IPMI</option><option value="backup_json">Резервное копирование · JSON API (Vinchin)</option></select><div id="sourceDynamicFields" class="dynamic-fields"></div><div class="modal-actions"><button type="button" class="btn btn-secondary" data-close-modal>Отмена</button><button id="sourceSaveButton" type="submit" class="btn btn-primary">Сохранить источник <span>→</span></button></div></form></div></div>
+
+  <div id="agentModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="agentModalTitle"><div class="modal agent-modal"><div class="modal-head"><div><div class="eyebrow muted">УДАЛЁННЫЙ WINDOWS-УЗЕЛ</div><h2 id="agentModalTitle">Подключить агент</h2></div><button class="modal-close" data-close-modal aria-label="Закрыть">×</button></div><div id="agentCreatePane"><p class="modal-description">Агент сам отправляет heartbeat на сервер через HTTPS. Открывать входящие порты на удалённой площадке не требуется.</p><form id="agentForm"><label class="field-label" for="agentName">Название узла</label><input id="agentName" class="form-input" placeholder="Например, backup-node-01" required maxlength="100"><div class="modal-actions"><button type="button" class="btn btn-secondary" data-close-modal>Отмена</button><button type="submit" class="btn btn-primary">Создать токен <span>→</span></button></div></form></div><div id="agentTokenPane" class="hidden"><div class="token-warning"><span>!</span><div><b>Скопируйте токен сейчас</b><small>Секрет больше не будет показан. При потере создайте новый агент.</small></div></div><div class="token-block"><label>Токен агента</label><div><code id="agentTokenValue"></code><button id="copyTokenButton" class="btn btn-secondary btn-small">Копировать</button></div></div><div class="config-block"><div><label>Конфигурация agent.json</label><button id="copyConfigButton" class="text-button">Копировать JSON</button></div><pre id="agentConfigValue"></pre></div><div class="agent-install-note"><b>Установка на Windows</b><span>Скопируйте файл в папку агента и запустите <code>python monitor_agent.py --config agent.json</code>. Пример службы Task Scheduler — в README.</span></div><div class="modal-actions"><button type="button" class="btn btn-primary" data-close-modal>Готово</button></div></div></div></div>
+
+  <div id="detailModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="detailTitle"><div class="modal detail-modal"><div class="modal-head"><div><div class="eyebrow muted">СВЕДЕНИЯ ОБ УСТРОЙСТВЕ</div><h2 id="detailTitle">Устройство</h2></div><button class="modal-close" data-close-modal aria-label="Закрыть">×</button></div><div id="detailContent"></div><div class="modal-actions"><button type="button" class="btn btn-secondary" data-close-modal>Закрыть</button></div></div></div>
+
+  <div id="toastRegion" class="toast-region" aria-live="polite"></div>
+  <script src="/static/app.js" defer></script>
+</body>
+</html>

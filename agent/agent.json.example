@@ -1,0 +1,17 @@
+{
+  "server_url": "https://monitor.example.com",
+  "agent_id": "PASTE_AGENT_ID_FROM_DASHBOARD",
+  "token": "PASTE_ONE_TIME_TOKEN_FROM_DASHBOARD",
+  "interval_seconds": 60,
+  "verify_tls": true,
+  "timeout_seconds": 15,
+  "windows_event_minutes": 15,
+  "disk_warning_free_percent": 15,
+  "disk_critical_free_percent": 8,
+  "monitored_services": [
+    "EventLog",
+    "LanmanServer"
+  ],
+  "backup_status_file": "C:\\ProgramData\\SRV-Monitoring\\backup-status.json",
+  "external_checks": []
+}

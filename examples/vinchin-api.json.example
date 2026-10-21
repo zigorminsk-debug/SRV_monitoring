@@ -1,0 +1,14 @@
+{
+  "url": "https://vinchin.example.local/REPLACE-WITH-YOUR-DOCUMENTED-READ-ONLY-ENDPOINT",
+  "auth_type": "basic",
+  "username": "monitoring-readonly",
+  "password": "SET-LOCALLY-AND-RESTRICT-FILE-ACL",
+  "bearer_token": "",
+  "jobs_path": "data.jobs",
+  "status_path": "status",
+  "job_name_path": "name",
+  "last_run_path": "last_run",
+  "success_values": ["success", "succeeded", "completed", "ok"],
+  "failure_values": ["failed", "error", "aborted", "cancelled"],
+  "expected_interval_minutes": 1440
+}

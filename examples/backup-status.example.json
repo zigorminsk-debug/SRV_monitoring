@@ -1,0 +1,14 @@
+{
+  "checks": [
+    {
+      "name": "Vinchin · Daily VMware backup",
+      "status": "ok",
+      "message": "Последнее задание завершено успешно 2026-10-21T02:15:00Z"
+    }
+  ],
+  "metrics": {
+    "job_count": 1,
+    "failed_count": 0,
+    "last_success_at": "2026-10-21T02:15:00Z"
+  }
+}
