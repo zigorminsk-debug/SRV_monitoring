@@ -12,7 +12,8 @@ from dotenv import load_dotenv
 
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(ROOT_DIR / ".env", override=False)
+ENV_FILE = Path(os.getenv("MONITORING_ENV_FILE", str(ROOT_DIR / ".env"))).expanduser()
+load_dotenv(ENV_FILE, override=False)
 
 
 def _env_bool(name: str, default: bool = False) -> bool:
@@ -82,13 +83,17 @@ def load_settings() -> Settings:
             "ADMIN_PASSWORD",
             lambda: secrets.token_urlsafe(24),
         )
-        if was_generated:
-            print(
-                "[SRV-monitoring] ADMIN_PASSWORD is not set. A one-time bootstrap password "
-                f"was saved to: {bootstrap_path}"
-            )
-        else:
-            print(f"[SRV-monitoring] ADMIN_PASSWORD is not set; using {bootstrap_path}")
+        try:
+            if was_generated:
+                print(
+                    "[SRV-monitoring] ADMIN_PASSWORD is not set. A one-time bootstrap password "
+                    f"was saved to: {bootstrap_path}"
+                )
+            else:
+                print(f"[SRV-monitoring] ADMIN_PASSWORD is not set; using {bootstrap_path}")
+        except Exception:
+            # PyInstaller --noconsole has no stdout; the bootstrap file remains available.
+            pass
 
     session_secret = _local_secret(
         data_dir,

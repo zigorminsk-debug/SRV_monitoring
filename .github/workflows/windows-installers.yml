@@ -1,0 +1,116 @@
+name: Build Windows installers
+
+on:
+  push:
+    branches:
+      - "arena/60d4fa34-srv-monitoring"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows-installers:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    env:
+      PYTHONUTF8: "1"
+      PYTHONIOENCODING: utf-8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install Python dependencies and packager
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt pytest pyinstaller
+
+      - name: Test application
+        run: |
+          python -m pytest -q
+          python -m compileall -q srv_monitoring agent server_entry.py agent_entry.py
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          $candidates = @(
+            "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
+            "$env:ProgramFiles\Inno Setup 6\ISCC.exe"
+          )
+          if (-not ($candidates | Where-Object { Test-Path $_ })) {
+            choco install innosetup --yes --no-progress
+          }
+          $iscc = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $iscc) {
+            $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          }
+          if (-not (Test-Path $iscc)) { throw "Inno Setup compiler not found at $iscc" }
+          "ISCC_PATH=$iscc" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Build self-contained server executable
+        shell: pwsh
+        run: |
+          pyinstaller --noconfirm --clean --onedir --noconsole `
+            --name SRVMonitoringServer `
+            --distpath build\server `
+            --workpath build\pyinstaller-server `
+            --specpath build `
+            --add-data "static;static" `
+            --collect-all fastapi `
+            --collect-all starlette `
+            --collect-all uvicorn `
+            --collect-all pydantic `
+            --collect-all pydantic_core `
+            --collect-all cryptography `
+            --collect-all dotenv `
+            --collect-all pyVmomi `
+            --collect-all pyVim `
+            --hidden-import pyVim.connect `
+            server_entry.py
+
+      - name: Build self-contained agent executable
+        shell: pwsh
+        run: |
+          pyinstaller --noconfirm --clean --onedir --noconsole `
+            --name SRVMonitoringAgent `
+            --distpath build\agent `
+            --workpath build\pyinstaller-agent `
+            --specpath build `
+            --collect-all psutil `
+            --collect-all httpx `
+            --collect-all certifi `
+            --hidden-import agent.monitor_agent `
+            agent_entry.py
+
+      - name: Compile installers
+        shell: pwsh
+        run: |
+          $installerOutput = Join-Path $env:GITHUB_WORKSPACE "build\installers"
+          New-Item -ItemType Directory -Force $installerOutput | Out-Null
+          $serverArgs = @("/Qp", "/O$installerOutput", "/DAppVersion=0.1.0", "packaging\server.iss")
+          & $env:ISCC_PATH @serverArgs
+          if ($LASTEXITCODE -ne 0) { throw "Server installer compilation failed: $LASTEXITCODE" }
+          $agentArgs = @("/Qp", "/O$installerOutput", "/DAppVersion=0.1.0", "packaging\agent.iss")
+          & $env:ISCC_PATH @agentArgs
+          if ($LASTEXITCODE -ne 0) { throw "Agent installer compilation failed: $LASTEXITCODE" }
+          $expected = @("SRV-Monitoring-Server-Setup.exe", "SRV-Monitoring-Agent-Setup.exe")
+          foreach ($name in $expected) {
+            $path = Join-Path $installerOutput $name
+            if (-not (Test-Path $path)) { throw "Expected setup executable missing: $path" }
+          }
+          Get-ChildItem $installerOutput -Filter "*.exe" | Format-Table Name, Length
+
+      - name: Upload setup executables
+        uses: actions/upload-artifact@v4
+        with:
+          name: SRV-Monitoring-Windows-Installers
+          path: build/installers/*.exe
+          if-no-files-found: error
+          retention-days: 30

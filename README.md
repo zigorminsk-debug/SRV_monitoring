@@ -74,6 +74,17 @@ Start-ScheduledTask -TaskName 'SRV Monitoring Server'
 
 У серверного узла должен быть сетевой маршрут до ESXi/vCenter, BMC и backup API — обычно через VPN/site-to-site VPN, а не через публикацию этих интерфейсов в Интернет. Создайте для VMware/BMC/Backup отдельные read-only учётные записи с минимально необходимыми правами.
 
+## Готовые setup.exe через GitHub Actions
+
+Workflow `.github/workflows/windows-installers.yml` собирает self-contained Windows executable и оборачивает их в установщики Inno Setup. Он запускается при push в Arena-ветку и вручную через **Actions → Build Windows installers → Run workflow**. После успешной сборки скачайте артефакт **SRV-Monitoring-Windows-Installers** на странице запуска workflow (**Actions → Build Windows installers → последний run → Artifacts**); срок хранения — 30 дней. Внутри будут файлы:
+
+- `SRV-Monitoring-Server-Setup.exe` — сервер без требования устанавливать Python на целевую машину;
+- `SRV-Monitoring-Agent-Setup.exe` — удалённый агент без требования устанавливать Python.
+
+Установщик сервера попросит публичный HTTPS URL, порт, допустимые Host и PEM certificate/private key. Он скопирует TLS-ключи и настройки в `%ProgramData%\SRV Monitoring`, добавит задачу Windows Scheduler от `SYSTEM` и откроет входящий TCP-порт выбранного HTTPS-порта в Windows Firewall. Ограничьте этот порт внешним firewall до доверенных адресов, если это возможно. Bootstrap-пароль будет создан при первом старте в `%ProgramData%\SRV Monitoring\data\initial-admin-password.txt`.
+
+Установщик агента запросит HTTPS URL сервера, Agent ID и одноразовый token. Сначала создайте агент в веб-панели, затем вставьте эти значения в установщик. Конфигурация сохраняется с ограниченными ACL в `%ProgramData%\SRV Monitoring Agent\agent.json`; задача агента запускается при загрузке Windows. При удалении приложения конфигурация, токен и база данных намеренно сохраняются.
+
 ## Подключение источников
 
 Войдите в панель → **Добавить источник**. Пароли и токены не возвращаются в API после сохранения; при редактировании секрет оставьте пустым, чтобы не менять его.
