@@ -59,13 +59,14 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force build | Out-Null
           $buildLog = Join-Path $env:GITHUB_WORKSPACE "build\\server-pyinstaller.log"
+          $staticDir = (Resolve-Path "static").Path
           $pyinstallerArgs = @(
             "--noconfirm", "--clean", "--onedir", "--noconsole",
             "--name", "SRVMonitoringServer",
             "--distpath", "build\\server",
             "--workpath", "build\\pyinstaller-server",
             "--specpath", "build",
-            "--add-data", "static;static",
+            "--add-data", "$staticDir;static",
             "--collect-all", "fastapi",
             "--collect-all", "starlette",
             "--collect-all", "uvicorn",
